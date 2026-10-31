@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#050b18" />
+<title>AURORA DUEL — 北極遊戯</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%235ff2e0'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23060d1e'/%3E%3Cpath d='M32 8v48M10 20l44 24M54 20L10 44M32 16l-8 6 8 6 8-6zM32 36l-8 6 8 6 8-6z' stroke='url(%23g)' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<canvas id="arctic" aria-hidden="true"></canvas>
+<div class="sky-noise" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none"><path d="M24 4v40M7 14l34 20M41 14L7 34M24 12l-6 5 6 5 6-5zM24 28l-6 5 6 5 6-5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-text"><b>AURORA</b> DUEL<small>北極遊戯 / ARCTIC CIRCLE</small></span>
+    </div>
+
+    <button class="room-chip" id="roomChip" type="button" aria-label="ルーム情報を開く">
+      <span class="live-dot" id="netDot"></span>
+      <span class="room-label">ROOM</span>
+      <strong id="roomCode">······</strong>
+      <span class="room-role" id="roomRole">HOST</span>
+    </button>
+
+    <div class="top-actions">
+      <button class="icon-btn" id="soundBtn" type="button" title="サウンド" aria-label="サウンド切替">
+        <svg class="ico-on" viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 8.5c1.5 1 2.2 2.2 2.2 3.5S17.5 14.5 16 15.5M18.5 6c2.4 1.7 3.5 3.7 3.5 6s-1.1 4.3-3.5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <svg class="ico-off" viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="helpBtn" type="button" title="遊び方" aria-label="遊び方">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M9.7 9.2a2.5 2.5 0 114.2 1.8c-.9.8-1.9 1.2-1.9 2.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <aside class="rail rail-left">
+      <section class="rail-card room-panel">
+        <div class="rail-title"><span>ROOM LINK</span><span class="tiny" id="netState">CONNECTING</span></div>
+        <p class="room-hint">このルームに招待する</p>
+        <div class="code-display" id="codeDisplay">······</div>
+        <button class="ghost-btn wide" id="copyBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>
+          招待リンクをコピー
+        </button>
+        <div class="vs-line"><span></span><b>VS</b><span></span></div>
+        <div class="players-mini">
+          <div><i class="mini-dot you"></i><span id="miniYou">あなた</span></div>
+          <div><i class="mini-dot foe"></i><span id="miniFoe">ポーラーAI</span></div>
+        </div>
+      </section>
+
+      <section class="rail-card deck-panel">
+        <div class="rail-title"><span>YOUR DECK</span><span class="tiny" id="deckCount">24</span></div>
+        <div class="deck-visual" id="deckVisual" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+          <span>ARCTIC<br/>DECK</span>
+        </div>
+        <div class="pile-row">
+          <div><span class="pile-label">GRAVE</span><b id="graveCount">0</b></div>
+          <div><span class="pile-label">HAND</span><b id="handCount">5</b></div>
+          <div><span class="pile-label">LP</span><b id="lpMini">8000</b></div>
+        </div>
+      </section>
+    </aside>
+
+    <div class="board-wrap">
+      <section class="hud hud-opp" id="hudOpp">
+        <div class="avatar foe-avatar" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="25" stroke="currentColor" stroke-width="1.2" opacity=".6"/><path d="M32 8v48M12 20l40 24M52 20L12 44M32 17l-7 6 7 6 7-6zM32 35l-7 6 7 6 7-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="hud-main">
+          <div class="hud-line"><strong id="oppName">ポーラーAI</strong><span class="tag" id="oppTag">AI</span><span class="turn-pip" id="oppTurnPip"></span></div>
+          <div class="lp-wrap">
+            <div class="lp-bar"><i id="oppLpBar" style="width:100%"></i><span class="lp-shine"></span></div>
+            <b class="lp-value" id="oppLp">8000</b>
+          </div>
+        </div>
+        <div class="hud-side">
+          <span class="deck-pill"><i></i><b id="oppDeck">24</b><small>DECK</small></span>
+          <span class="grave-pill"><b id="oppHand">5</b><small>HAND</small></span>
+          <span class="grave-pill"><b id="oppGrave">0</b><small>GRAVE</small></span>
+        </div>
+      </section>
+
+      <div class="field-zone opp-zone" id="oppField" data-side="opp" aria-label="相手フィールド"></div>
+
+      <div class="center-rail">
+        <div class="center-glow"></div>
+        <div class="phase-badge" id="phaseBadge"><span class="phase-kicker">PHASE</span><b id="phaseText">メイン</b></div>
+        <div class="turn-banner" id="turnBanner">
+          <span class="turn-arrow">◆</span>
+          <b id="turnText">YOUR TURN</b>
+          <span class="turn-num" id="turnNum">TURN 1</span>
+        </div>
+        <div class="log-ticker" id="logTicker"><span>北極の決闘場へようこそ。</span></div>
+      </div>
+
+      <div class="field-zone player-zone" id="playerField" data-side="you" aria-label="自分のフィールド"></div>
+
+      <section class="hud hud-you" id="hudYou">
+        <div class="avatar you-avatar" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="25" stroke="currentColor" stroke-width="1.2" opacity=".6"/><path d="M32 6l4.5 13.5L50 24l-13.5 4.5L32 42l-4.5-13.5L14 24l13.5-4.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="4" fill="currentColor"/></svg>
+        </div>
+        <div class="hud-main">
+          <div class="hud-line"><strong id="youName">あなた</strong><span class="tag you-tag" id="youTag">YOU</span><span class="turn-pip" id="youTurnPip"></span></div>
+          <div class="lp-wrap">
+            <div class="lp-bar"><i id="youLpBar" style="width:100%"></i><span class="lp-shine"></span></div>
+            <b class="lp-value" id="youLp">8000</b>
+          </div>
+        </div>
+        <div class="hud-side">
+          <span class="deck-pill"><i></i><b id="youDeck">24</b><small>DECK</small></span>
+          <span class="grave-pill"><b id="youGrave">0</b><small>GRAVE</small></span>
+        </div>
+      </section>
+    </div>
+
+    <aside class="rail rail-right">
+      <section class="rail-card inspect-panel" id="inspectPanel">
+        <div class="rail-title"><span>CARD DATA</span><span class="tiny" id="inspectType">—</span></div>
+        <div class="inspect-empty" id="inspectEmpty">
+          <svg viewBox="0 0 64 64" fill="none"><rect x="14" y="8" width="36" height="48" rx="5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4"/><path d="M32 22v12M32 40v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>カードを選択すると<br/>詳細が表示されます</p>
+        </div>
+        <div class="inspect-body" id="inspectBody" hidden>
+          <div class="inspect-name" id="inspectName">—</div>
+          <div class="inspect-sub" id="inspectSub">—</div>
+          <div class="inspect-art" id="inspectArt"></div>
+          <p class="inspect-text" id="inspectText">—</p>
+          <div class="inspect-stats" id="inspectStats"></div>
+        </div>
+      </section>
+
+      <section class="rail-card log-panel">
+        <div class="rail-title"><span>DUEL LOG</span><span class="tiny">LIVE</span></div>
+        <ol class="duel-log" id="duelLog"></ol>
+      </section>
+
+      <section class="rail-card hint-panel">
+        <div class="hint-icon">✦</div>
+        <p id="hintText">手札を選び、光るマスへ。<br/>召喚 → バトル → 攻撃。</p>
+      </section>
+    </aside>
+  </main>
+
+  <section class="hand-dock" id="handDock">
+    <div class="action-bar">
+      <div class="selection-info" id="selectionInfo">
+        <span class="sel-kicker" id="selKicker">SELECT</span>
+        <b id="selName">カードを選択</b>
+        <span id="selHint">手札から1枚選んでください</span>
+      </div>
+      <div class="action-buttons" id="actionButtons"></div>
+    </div>
+    <div class="hand-scroll">
+      <div class="hand" id="hand" aria-label="手札"></div>
+    </div>
+    <div class="turn-controls">
+      <button class="ghost-btn" id="surrenderBtn" type="button">降参</button>
+      <button class="phase-btn" id="phaseBtn" type="button"><span>バトルへ</span><small>BATTLE PHASE</small></button>
+      <button class="end-btn" id="endBtn" type="button"><span>ターン終了</span><small>END TURN</small></button>
+    </div>
+  </section>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+<div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+<div class="banner-layer" id="bannerLayer" aria-hidden="true"></div>
+
+<div class="modal-backdrop" id="helpModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <button class="modal-close" data-close="helpModal" type="button" aria-label="閉じる">×</button>
+    <div class="modal-kicker">ARCTIC DUEL MANUAL</div>
+    <h2 id="helpTitle">北極遊戯の遊び方</h2>
+    <div class="help-grid">
+      <div><h3>01 / 目的</h3><p>相手のライフポイント 8000 を 0 にするか、相手のデッキを尽きさせれば勝利。あなたのルームには招待リンクから友人が参加できます。誰も来ない間はポーラーAIが対戦相手です。</p></div>
+      <div><h3>02 / 召喚</h3><p>手札のモンスターを選び、光るモンスターゾーンへ。攻撃表示または守備表示で配置。モンスター1体の召喚・セットは1ターンに1回。</p></div>
+      <div><h3>03 / バトル</h3><p>「バトルへ」を押し、自分のモンスターを選択。相手モンスターをクリックして攻撃。相手にモンスターがいなければ、相手プレイヤーへ直接攻撃できます。</p></div>
+      <div><h3>04 / 攻守判定</h3><p>攻撃表示同士はATKの高い方が生存し、差が相手LPへ。攻撃 vs 守備はATKがDEFを超えれば破壊、届かなければ攻撃側が差のダメージを受けます。</p></div>
+      <div><h3>05 / 魔法・罠</h3><p>魔法は手札から発動、またはセットして次のターンに発動。罠はセットしておくと相手の攻撃時に自動で発動します。伏せカードは相手に正体が見えません。</p></div>
+      <div><h3>06 / 操作</h3><p>カードを選択 → アクションボタン、または光るマスをクリック。攻撃時はカードが北極の空へ舞い上がり、敵陣へ突進します。BGM・効果音は右上のスピーカーで切替。</p></div>
+    </div>
+    <div class="modal-foot"><span>4 × 2 FIELD</span><span>NO CARD IMAGES</span><span>ONLINE READY</span></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="roomModal" hidden>
+  <div class="modal modal-room" role="dialog" aria-modal="true" aria-labelledby="roomTitle">
+    <button class="modal-close" data-close="roomModal" type="button" aria-label="閉じる">×</button>
+    <div class="modal-kicker">PRIVATE ARCTIC ROOM</div>
+    <h2 id="roomTitle">あなたのルーム</h2>
+    <p class="room-modal-copy">起動した瞬間から、あなたは自分のルームのホストです。下のコードか招待リンクを送るだけで、友人がこのデュエルに参加できます。</p>
+    <div class="big-code" id="bigCode">······</div>
+    <div class="room-status-grid">
+      <div><span>接続</span><b id="modalNet">接続中…</b></div>
+      <div><span>あなた</span><b id="modalYou">あなた</b></div>
+      <div><span>対戦相手</span><b id="modalFoe">ポーラーAI</b></div>
+      <div><span>形式</span><b>4 × 2 / 8000 LP</b></div>
+    </div>
+    <label class="name-field">あなたの名前<input id="nameInput" maxlength="14" value="あなた" autocomplete="off" /></label>
+    <div class="modal-actions">
+      <button class="primary-btn" id="modalCopy" type="button">招待リンクをコピー</button>
+      <button class="ghost-btn" id="modalAi" type="button">AIと対戦</button>
+    </div>
+    <div class="room-note" id="roomNote">ルームは自動生成されています。招待が届くまでAIが相手です。</div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="overModal" hidden>
+  <div class="modal modal-over" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="over-rays" aria-hidden="true"></div>
+    <div class="modal-kicker" id="overKicker">DUEL COMPLETE</div>
+    <h2 id="overTitle">VICTORY</h2>
+    <p id="overCopy">北極の頂点に立った。</p>
+    <div class="over-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button class="primary-btn" id="rematchBtn" type="button">再戦する</button>
+      <button class="ghost-btn" id="overRoomBtn" type="button">ルームを見る</button>
+    </div>
+  </div>
+</div>
+
+<div class="intro" id="intro">
+  <div class="intro-aurora"></div>
+  <div class="intro-inner">
+    <div class="intro-kicker">ARCTIC CIRCLE / DUEL ARENA</div>
+    <h1>AURORA<span>DUEL</span></h1>
+    <p>北極遊戯 ― 完全決闘</p>
+    <div class="intro-room">ROOM <b id="introRoom">······</b> <span id="introRoomText">に参加しました</span></div>
+    <div class="intro-load"><i></i></div>
+  </div>
+</div>
+
+<script src="vendor/peerjs.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
